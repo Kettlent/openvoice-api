@@ -13,6 +13,26 @@ from openvoice import se_extractor
 from openvoice.api import ToneColorConverter
 from melo.api import TTS
 
+import nltk   # <-- ADD THIS
+
+# -------------------------------------------------------
+# Auto-download required NLTK models if missing
+# -------------------------------------------------------
+try:
+    nltk.data.find("taggers/averaged_perceptron_tagger_eng")
+except LookupError:
+    nltk.download("averaged_perceptron_tagger_eng")
+
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download("punkt")
+
+try:
+    nltk.data.find("corpora/wordnet")
+except LookupError:
+    nltk.download("wordnet")
+
 # ---------------------
 # Config
 # ---------------------
@@ -43,7 +63,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+# curl -X POST "https://06pk065k5dkotm-8000.proxy.runpod.net/clone_voice" \
+#   -F "text=Now let make" \
+#   -F "language=EN" \
+#   -F "reference_audio=@/Users/scallercell_2/Downloads/audiosample.wav" \
+#   --output cloned_voice.wav
 
 from typing import Optional
 
