@@ -44,9 +44,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-tone_color_converter: ToneColorConverter | None = None
 
+from typing import Optional
 
+tone_color_converter: Optional[ToneColorConverter] = None
 # ---------------------
 # Startup: load converter
 # ---------------------
