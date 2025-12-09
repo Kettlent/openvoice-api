@@ -41,7 +41,7 @@
 #   -F "reference_audio=@/Users/scallercell_2/Downloads/audiosample.wav" \
 #   --output cloned_voice.wav
 
-
+#  uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 
 import io
 import os
@@ -147,7 +147,7 @@ def get_source_se_for_language(language: str, model: TTS):
         raise RuntimeError(f"No speakers found for language {language}")
 
     # pick the first speaker as default
-    speaker_key = list(speaker_ids.keys())[0]
+    speaker_key = sorted(speaker_ids.keys())[0]
     speaker_id = speaker_ids[speaker_key]
 
     # the SES file names use lowercased, dash-separated keys
