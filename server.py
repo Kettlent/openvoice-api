@@ -265,6 +265,7 @@ async def clone_voice(
             src_se=source_se,
             tgt_se=target_se,
             output_path=out_path,
+            tau=1.0,
             message="@MyShell",
         )
 
