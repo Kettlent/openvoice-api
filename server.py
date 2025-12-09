@@ -1,3 +1,48 @@
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@69.30.85.218 -p 22169
+#python3 server.py --port 8888 --model_dir ../../../pretrained_models/CosyVoice2-0.5B
+#podid - https://hmwecuisc92c1a-8888.proxy.runpod.net
+
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@74.2.96.22 -p 15815 
+
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@69.30.85.167 -p 22003 
+
+# cd /workspace
+# wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+# bash miniconda.sh -b -p /workspace/miniconda
+#source /workspace/miniconda/etc/profile.d/conda.sh
+
+
+# conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+# conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# conda create -y -n cosyvoice python=3.10
+# conda activate cosyvoice
+
+#echo "source /workspace/miniconda/etc/profile.d/conda.sh" >> ~/.bashrc
+
+# pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
+
+
+#chmod +x /workspace/start.sh
+# bash /workspace/start.sh
+# tail -50 /workspace/cosyvoice.log
+
+
+
+#   curl -X POST "https://hmwecuisc92c1a-8888.proxy.runpod.net/tts_zero_shot" \
+#   -F "tts_text=Hello from CosyVoice on Runpod" \
+#   -F "prompt_text=希望你以后能够做的比我还好呦。" \
+#   -F "prompt_wav=@/Users/scallercell_2/CosyVoice/asset/zero_shot_prompt.wav" \
+#   --output result.wav
+
+# curl -X POST "https://06pk065k5dkotm-8000.proxy.runpod.net/clone_voice" \
+#   -F "text=Now let make" \
+#   -F "language=EN" \
+#   -F "reference_audio=@/Users/scallercell_2/Downloads/audiosample.wav" \
+#   --output cloned_voice.wav
+
+
+
 import io
 import os
 import tempfile
@@ -63,11 +108,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# curl -X POST "https://06pk065k5dkotm-8000.proxy.runpod.net/clone_voice" \
-#   -F "text=Now let make" \
-#   -F "language=EN" \
-#   -F "reference_audio=@/Users/scallercell_2/Downloads/audiosample.wav" \
-#   --output cloned_voice.wav
+
 
 from typing import Optional
 
@@ -148,14 +189,16 @@ async def clone_voice(
     Text + reference voice → cloned voice WAV.
     - text: text to speak
     - language: one of SUPPORTED_LANGUAGES
-    - speed: TTS speed (1.0 = normal)
-    - reference_audio: mp3/wav/etc. of the voice to clone
+    - speed: TTS speed
+    - reference_audio: sample voice file (wav/mp3/etc.)
     """
+
     global tone_color_converter
 
     if tone_color_converter is None:
         raise HTTPException(status_code=500, detail="ToneColorConverter not initialized.")
 
+    # Normalize language
     language = language.upper()
     if language not in SUPPORTED_LANGUAGES:
         raise HTTPException(
@@ -166,30 +209,41 @@ async def clone_voice(
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
 
-    # Save reference audio to temp file
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(reference_audio.filename or "")[1] or ".wav") as ref_f:
-            ref_path = ref_f.name
-            ref_f.write(await reference_audio.read())
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save reference audio: {e}")
-
+    # --- TEMP FILE PLACEHOLDERS ---
+    ref_path = None
     src_path = None
     out_path = None
 
     try:
-        # 1) Extract target speaker embedding from reference audio
+        # =======================================================
+        # STEP 1 — Save uploaded reference audio
+        # =======================================================
+        suffix = os.path.splitext(reference_audio.filename or "")[1] or ".wav"
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as ref_f:
+            ref_path = ref_f.name
+            ref_f.write(await reference_audio.read())
+
+        # =======================================================
+        # STEP 2 — Extract speaker embedding
+        # =======================================================
         target_se, _ = se_extractor.get_se(
-            ref_path, tone_color_converter, vad=True
+            ref_path,
+            tone_color_converter,
+            vad=True
         )
 
-        # 2) Create Melo TTS model
+        # =======================================================
+        # STEP 3 — Initialize Melo TTS for the selected language
+        # =======================================================
         tts_model = TTS(language=language, device=DEVICE)
 
-        # 3) Pick default base speaker and load its SE
+        # Base speaker mapping for this language
         speaker_id, source_se, speaker_key = get_source_se_for_language(language, tts_model)
 
-        # 4) Generate base speech to a temporary WAV file
+        # =======================================================
+        # STEP 4 — Generate intermediate base speaker audio
+        # =======================================================
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as src_f:
             src_path = src_f.name
 
@@ -200,20 +254,23 @@ async def clone_voice(
             speed=speed,
         )
 
-        # 5) Run tone color converter to match the target speaker
+        # =======================================================
+        # STEP 5 — Convert tone into reference voice
+        # =======================================================
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as out_f:
             out_path = out_f.name
 
-        encode_message = "@MyShell"
         tone_color_converter.convert(
             audio_src_path=src_path,
             src_se=source_se,
             tgt_se=target_se,
             output_path=out_path,
-            message=encode_message,
+            message="@MyShell",
         )
 
-        # 6) Read final WAV and return as response
+        # =======================================================
+        # STEP 6 — Return WAV bytes
+        # =======================================================
         with open(out_path, "rb") as f:
             audio_bytes = f.read()
 
@@ -228,7 +285,7 @@ async def clone_voice(
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        # Cleanup temp files
+        # Cleanup
         for p in (ref_path, src_path, out_path):
             if p and os.path.exists(p):
                 try:
