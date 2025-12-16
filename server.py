@@ -284,7 +284,7 @@ async def clone_voice(
             tgt_se=target_se,
             output_path=out_path,
             tau=1.0,
-            message="",
+            message="default",
         )
 
         # =======================================================
