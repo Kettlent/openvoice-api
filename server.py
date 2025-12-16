@@ -248,7 +248,7 @@ async def clone_voice(
         target_se, _ = se_extractor.get_se(
             ref_path,
             tone_color_converter,
-            vad=True
+            vad=False
         )
 
         # =======================================================
