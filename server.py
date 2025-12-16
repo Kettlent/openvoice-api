@@ -4,12 +4,23 @@
 
 #ssh -i /Users/scallercell_2/Desktop/cosyvoice root@74.2.96.22 -p 15815 
 
-#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@69.30.85.167 -p 22003 
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@69.30.85.167 -p 22049 
+#ssh  -i /Users/scallercell_2/Desktop/cosyvoice root@38.147.83.16 -p 14576 
+
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@198.13.252.9 -p 11017 
+
+#ssh -i /Users/scallercell_2/Desktop/cosyvoice root@69.30.85.191 -p 22129 
+
+#ssh y38ge80rvfc9hr-64411d3c@ssh.runpod.io -i /Users/scallercell_2/Desktop/cosyvoice
+
+#scp -p 18397 -i /Users/scallercell_2/Desktop/cosyvoice "/Users/scallercell_2/Downloads/silencevideo.mp4" root@198.13.252.9:/workspace
 
 # cd /workspace
 # wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 # bash miniconda.sh -b -p /workspace/miniconda
 #source /workspace/miniconda/etc/profile.d/conda.sh
+
+#uvicorn upload_server:app --host 0.0.0.0 --port 8000
 
 
 # conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
@@ -40,6 +51,13 @@
 #   -F "language=EN" \
 #   -F "reference_audio=@/Users/scallercell_2/Downloads/audiosample.wav" \
 #   --output cloned_voice.wav
+
+# curl -X POST "https://y38ge80rvfc9hr-8000.proxy.runpod.net/edit" \
+#   -F "prompt=Move the camera to a top-down overhead view while keeping the scene consistent." \
+#   -F "image_file=@/Users/scallercell_2/Downloads/input.png"
+
+
+
 
 #  uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 
